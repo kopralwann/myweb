@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generate Shadowsocks Account</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
+    input, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { background: #007BFF; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .hidden { display: none; }
+    #result, #resultNonTLS { margin-top: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .qr { text-align: center; margin-top: 10px; }
+    textarea { width: 100%; height: 80px; border-radius: 8px; padding: 10px; }
+    .logo { position: absolute; top: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+    footer { text-align: center; margin-top: 40px; font-size: 14px; color: #555; }
+  </style>
+</head>
+<body>
+
+  <img src="/logopanel.jpg" alt="Logo" class="logo">
+  <h2>Generate Shadowsocks</h2>
+
+  <input type="text" id="ipPort" placeholder="IP:Port contoh 1.1.1.1:443" />
+  <select id="domain">
+    <option value="">-- Pilih Domain --</option>
+    <option value="clubgratis.xyz">clubgratis.xyz</option>
+    <option value="akungratis.dpdns.org">akungratis.dpdns.org</option>
+    <option value="wilcardcf.biz.id">wilcardcf.biz.id</option>
+    <option value="mrkings.xyz">mrkings.xyz</option>
+  </select>
+  <select id="bug">
+    <option value="">-- Pilih Bug Wildcard --</option>
+    <option value="ava.game.naver.com">ava.game.naver.com</option>
+    <option value="graph.instagram.com">graph.instagram.com</option>
+    <option value="quiz.int.vidio.com">quiz.int.vidio.com</option>
+    <option value="investor.fb.com">investor.fb.com</option>
+    <option value="support.zoom.us">support.zoom.us</option>
+    <option value="zaintest.vuclip.com">zaintest.vuclip.com</option>
+  </select>
+
+  <button onclick="generateSS()">Buat Akun Shadowsocks</button>
+
+  <div id="result" class="hidden">
+    <h3>Information Account:</h3>
+    <p><strong>🌐 Remark:</strong> <span id="remarks"class="font-semibold"></span></p>
+    <p><strong>🟢 Ping:</strong> <span id="ping" class="font-semibold" style="color:green;"></span></p>
+    <p><strong>📡 Domain:</strong> <span id="res-domain"></span></p>
+    <p><strong>🐞 SNI/Bug:</strong> <span id="res-bug"></span></p>
+    <p><strong>🆔 UUID:</strong> <span id="uuid"></span></p>
+    <p><strong>🚪 Path:</strong> <span id="path"></span></p>
+      
+    <h3>Shadowsocks TLS:</h3>
+    <textarea id="ss-link-tls" readonly></textarea>
+    <div class="qr">
+      <img id="qrcode-tls" src="" alt="QR Code SS TLS">
+
+      <button onclick="copyConfig('ss-link-tls')">Salin Konfigurasi TLS</button>
+    </div>
+  </div>
+
+  <div id="resultNonTLS" class="hidden">
+    <h3>Shadowsocks Non-TLS:</h3>
+    <textarea id="ss-link-nontls" readonly></textarea>
+    <div class="qr">
+      <img id="qrcode-nontls" src="" alt="QR Code SS Non-TLS">
+
+      <button onclick="copyConfig('ss-link-nontls')">Salin Konfigurasi NonTLS</button>
+    </div>
+  </div>
+
+  <footer>
+    <p><a href="http://t.me/club_gratis">Contact</a></p>
+    <p>&copy; 2025 Club Gratis</p>
+  </footer>
+
+  <script>
+    async function generateSS() {
+      const ipPort = document.getElementById('ipPort').value.trim();
+      const domain = document.getElementById('domain').value.trim();
+      const bug = document.getElementById('bug').value.trim();
+      const [ip, port] = ipPort.split(':');
+      const uuid = 'aaaaaaa1-bbbb-4ccc-addd-eeeeeeeeeee1';
+      const path = `/Club-Gratis/${ip}-${port}`;
+
+      if (!ip || !port || !domain || !bug) {
+        alert('Isi semua field dengan benar.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://api-checker.aquamarinelavinia.workers.dev/?ip=${ip}:${port}`);
+        const data = await res.json();
+        console.log('✅ Data Proxy:', data);
+        
+        if (!data.message || !data.message.includes('ACTIVE')) {
+          alert('Proxy tidak aktif!');
+          return;
+        }
+
+        const remarks = `${data.country || 'Unknown'} ${data.flag || ''} [${data.isp || 'Unknown ISP'}]`;
+        const ping = `${data.delay}`;
+        const method = 'none';
+        const host= `${bug}.${domain}`;
+
+        const ssLinkTLS = `ss://${btoa(`${method}:${uuid}`)}@${bug}:443?path=${path}&security=tls&host=${host}&type=ws&sni=${host}#${encodeURIComponent(remarks)}`;
+        const ssLinkNonTLS = `ss://${btoa(`${method}:${uuid}`)}@${bug}:80?path=${path}&security=none&type=ws&host=${host}#${encodeURIComponent(remarks)}`;
+
+        document.getElementById('remarks').textContent = remarks;
+        document.getElementById('ping').textContent = ping;
+        document.getElementById('res-domain').textContent = domain;
+        document.getElementById('res-bug').textContent = bug;
+        document.getElementById('uuid').textContent = uuid;
+        document.getElementById('path').textContent = path;
+        document.getElementById('ss-link-tls').value = ssLinkTLS;
+        document.getElementById('qrcode-tls').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ssLinkTLS)}`;
+
+        document.getElementById('ss-link-nontls').value = ssLinkNonTLS;
+        document.getElementById('qrcode-nontls').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ssLinkNonTLS)}`;
+
+        document.getElementById('result').classList.remove('hidden');
+        document.getElementById('resultNonTLS').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        alert('Gagal memproses akun.');
+      }
+    }
+
+    function copyConfig(id) {
+      const link = document.getElementById(id);
+      link.select();
+      link.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("Konfigurasi disalin!");
+    }
+  </script>
+
+</body>
+</html>

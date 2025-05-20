@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generate Akun Trojan</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
+    input, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { background: #28a745; color: white; cursor: pointer; }
+    button:hover { background: #1e7e34; }
+    .hidden { display: none; }
+    .result-box { margin-top: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .qr { text-align: center; margin-top: 10px; }
+    textarea { width: 100%; height: 80px; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .logo { position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 50px; height: 50px; object-fit: cover; }
+    footer { text-align: center; margin-top: 30px; font-size: 14px; color: #555; }
+  </style>
+</head>
+<body>
+
+  <img src="/logopanel.jpg" alt="Logo" class="logo">
+
+  <h2>Generate Akun Trojan</h2>
+
+  <input type="text" id="ipPort" placeholder="IP:Port contoh 1.1.1.1:443" />
+  <select id="domain">
+    <option value="">-- Pilih Domain --</option>
+    <option value="clubgratis.xyz">clubgratis.xyz</option>
+    <option value="akungratis.dpdns.org">akungratis.dpdns.org</option>
+    <option value="wilcardcf.biz.id">wilcardcf.biz.id</option>
+    <option value="mrkings.xyz">mrkings.xyz</option>
+  </select>
+  <select id="bug">
+    <option value="">-- Pilih Bug Wildcard --</option>
+    <option value="ava.game.naver.com">ava.game.naver.com</option>
+    <option value="graph.instagram.com">graph.instagram.com</option>
+    <option value="quiz.int.vidio.com">quiz.int.vidio.com</option>
+    <option value="investor.fb.com">investor.fb.com</option>
+    <option value="support.zoom.us">support.zoom.us</option>
+    <option value="zaintest.vuclip.com">zaintest.vuclip.com</option>
+  </select>
+
+  <button onclick="generateTrojan()">Buat Akun Trojan</button>
+
+  <div id="result" class="hidden">
+    <div class="result-box">
+      <h3>Information Account:</h3>
+    <p><strong>🌐 Remark:</strong> <span id="remarks"class="font-semibold"></span></p>
+    <p><strong>🟢 Ping:</strong> <span id="ping" class="font-semibold" style="color:green;"></span></p>
+    <p><strong>📡 Domain:</strong> <span id="res-domain"></span></p>
+    <p><strong>🐞 SNI/Bug:</strong> <span id="res-bug"></span></p>
+    <p><strong>🆔 Password:</strong> <span id="password"></span></p>
+    <p><strong>🚪 Path:</strong> <span id="path"></span></p>
+      
+      <p><strong>Trojan TLS:</strong></p>
+      <textarea id="link443" readonly></textarea>
+      <div class="qr"><img id="qr443" src="" alt="QR Trojan TLS"></div>
+      
+      <button onclick="copyText('link443')">Salin Config TLS</button>
+    </div>
+
+    <div class="result-box">
+      <p><strong>Trojan NonTLS:</strong></p>
+      <textarea id="link80" readonly></textarea>
+      <div class="qr"><img id="qr80" src="" alt="QR Trojan Non-TLS"></div>
+      
+      <button onclick="copyText('link80')">Salin Config Non-TLS</button>
+    </div>
+  </div>
+
+  <footer>
+    <p><a href="http://t.me/club_gratis">Contact</a></p>
+    <p>&copy; 2025 Club Gratis</p>
+  </footer>
+
+  <script>
+    async function generateTrojan() {
+      const ipPort = document.getElementById('ipPort').value.trim();
+      const domain = document.getElementById('domain').value.trim();
+      const bug = document.getElementById('bug').value.trim();
+      const result = document.getElementById('result');
+
+      if (!ipPort || !domain || !bug || !ipPort.includes(':')) {
+        alert('Isi semua field dengan benar.');
+        return;
+      }
+
+      const [ip, port] = ipPort.split(':');
+      const password = 'aaaaaaa1-bbbb-4ccc-addd-eeeeeeeeeee1';
+      const path = `/Club-Gratis/${ip}-${port}`;
+      const url = `https://api-checker.aquamarinelavinia.workers.dev/?ip=${ip}:${port}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.message || !data.message.includes('ACTIVE')) {
+          alert('Proxy tidak aktif!');
+          return;
+        }
+
+        const remarks = `${data.country || 'Unknown'} ${data.flag || ''} [${data.isp || 'Unknown ISP'}]`;
+        const ping = `${data.delay}`;
+        const host = `${bug}.${domain}`;
+
+        // TLS
+        const link443 = `trojan://${password}@${bug}:443?security=tls&host=${host}&type=ws&sni=${host}&path=${path}#${encodeURIComponent(remarks)}`;
+
+        // Non-TLS
+        const link80 = `trojan://${password}@${bug}:80?security=none&type=ws&host=${host}&path=${path}#${encodeURIComponent(remarks)}`;
+
+        document.getElementById('remarks').textContent = remarks;
+        document.getElementById('ping').textContent = ping;
+        document.getElementById('res-domain').textContent = domain;
+        document.getElementById('res-bug').textContent = bug;
+        document.getElementById('password').textContent = password;
+        document.getElementById('path').textContent = path;
+        document.getElementById('link443').value = link443;
+        document.getElementById('qr443').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link443)}`;
+
+        document.getElementById('link80').value = link80;
+        document.getElementById('qr80').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link80)}`;
+
+        result.classList.remove('hidden');
+      } catch (err) {
+        alert('Gagal mengambil data proxy.');
+      }
+    }
+
+    function copyText(id) {
+      const el = document.getElementById(id);
+      el.select();
+      el.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      alert("Konfigurasi disalin!");
+    }
+  </script>
+
+</body>
+</html>

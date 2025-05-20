@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generate VLESS Account</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
+    input, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { background: #28a745; color: white; cursor: pointer; }
+    button:hover { background: #1e7e34; }
+    .hidden { display: none; }
+    .result-box { margin-top: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .qr { text-align: center; margin-top: 10px; }
+    textarea { width: 100%; height: 80px; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .logo { position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 50px; height: 50px; object-fit: cover; }
+    footer { text-align: center; margin-top: 30px; font-size: 14px; color: #555; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/logopanel.jpg" alt="Logo" class="logo" />
+    <h2>Generate Akun VLESS</h2>
+  </header>
+
+  <input type="text" id="ipPort" placeholder="IP:Port contoh 1.1.1.1:443" />
+  <select id="domain">
+    <option value="">-- Pilih Domain --</option>
+    <option value="clubgratis.xyz">clubgratis.xyz</option>
+    <option value="akungratis.dpdns.org">akungratis.dpdns.org</option>
+    <option value="wilcardcf.biz.id">wilcardcf.biz.id</option>
+    <option value="mrkings.xyz">mrkings.xyz</option>
+  </select>
+  <select id="bug">
+    <option value="">-- Pilih Bug Wildcard --</option>
+    <option value="ava.game.naver.com">ava.game.naver.com</option>
+    <option value="graph.instagram.com">graph.instagram.com</option>
+    <option value="quiz.int.vidio.com">quiz.int.vidio.com</option>
+    <option value="investor.fb.com">investor.fb.com</option>
+    <option value="support.zoom.us">support.zoom.us</option>
+    <option value="zaintest.vuclip.com">zaintest.vuclip.com</option>
+  </select>
+
+  <button onclick="generateVLESS()">Buat Akun VLESS</button>
+
+  <div id="result" class="hidden">
+   <div class="result-box">
+    <h3>Information Account:</h3>
+    <p><strong>🌐 Remark:</strong> <span id="remarks"class="font-semibold"></span></p>
+    <p><strong>🟢 Ping:</strong> <span id="ping" class="font-semibold" style="color:green;"></span></p>
+    <p><strong>📡 Domain:</strong> <span id="res-domain"></span></p>
+    <p><strong>🐞 SNI/Bug:</strong> <span id="res-bug"></span></p>
+    <p><strong>🆔 UUID:</strong> <span id="uuid"></span></p>
+    <p><strong>🚪 Path:</strong> <span id="path"></span></p>
+    
+    <p><strong>Vless TLS:</strong></p>
+    <textarea id="vless-tls" readonly></textarea>
+    <div class="qr"><img id="qr-tls" src="" alt="QR Code TLS"></div>
+    
+    <button onclick="copyConfig('vless-tls')">Salin Config TLS</button>
+   </div>
+
+   <div class="result-box">
+    <p><strong>Vless Non-TLS:</strong></p>
+    <textarea id="vless-nontls" readonly></textarea>
+    <div class="qr"><img id="qr-nontls" src="" alt="QR Code Non-TLS"></div>
+
+    <button onclick="copyConfig('vless-nontls')">Salin Config NonTLS</button>
+  </div>
+ </div>
+  
+  <footer>
+    <p><a href="http://t.me/club_gratis">Contact</a></p>
+    <p>&copy; 2025 Club Gratis</p>
+  </footer>
+
+  <script>
+    async function generateVLESS() {
+      const ipPort = document.getElementById('ipPort').value.trim();
+      const domain = document.getElementById('domain').value.trim();
+      const bug = document.getElementById('bug').value.trim();
+      const resultBox = document.getElementById('result');
+
+      if (!ipPort || !domain || !bug || !ipPort.includes(':')) {
+        alert('Isi semua field dengan benar.');
+        return;
+      }
+
+      const [ip, port] = ipPort.split(':');
+      const uuid = 'aaaaaaa1-bbbb-4ccc-addd-eeeeeeeeeee1';
+      const path = `/Club-Gratis/${ip}-${port}`;
+
+      try {
+        const res = await fetch(`https://api-checker.aquamarinelavinia.workers.dev/?ip=${ip}:${port}`);
+        const data = await res.json();
+
+        if (!data.message || !data.message.includes('ACTIVE')) {
+          alert('Proxy tidak aktif!');
+          return;
+        }
+
+        const remarks = `${data.country || 'Unknown'} ${data.flag || ''} [${data.isp || 'Unknown ISP'}]`;
+        const ping = `${data.delay}`;
+        const host = `${bug}.${domain}`;
+
+        const linkTLS = `vless://${uuid}@${bug}:443?encryption=none&security=tls&type=ws&host=${host}&path=${path}#${remarks}`;
+        const linkNonTLS = `vless://${uuid}@${bug}:80?encryption=none&security=none&type=ws&host=${host}&path=${path}#${remarks}`;
+
+        document.getElementById('remarks').textContent = remarks;
+        document.getElementById('ping').textContent = ping;
+        document.getElementById('res-domain').textContent = domain;
+        document.getElementById('res-bug').textContent = bug;
+        document.getElementById('uuid').textContent = uuid;
+        document.getElementById('path').textContent = path;
+        
+        document.getElementById('vless-tls').value = linkTLS;
+        document.getElementById('vless-nontls').value = linkNonTLS;
+        document.getElementById('qr-tls').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(linkTLS)}`;
+        document.getElementById('qr-nontls').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(linkNonTLS)}`;
+
+        resultBox.classList.remove('hidden');
+      } catch (err) {
+        alert('Gagal mengambil data proxy.');
+      }
+    }
+
+    function copyConfig(id) {
+      const link = document.getElementById(id);
+      link.select();
+      link.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("Konfigurasi disalin!");
+    }
+  </script>
+</body>
+</html>

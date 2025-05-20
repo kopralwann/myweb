@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generate VMess Account</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
+    input, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    button { background: #007BFF; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .hidden { display: none; }
+    .result-box { margin-top: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .qr { text-align: center; margin-top: 10px; }
+    textarea { width: 100%; height: 80px; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .logo { position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 50px; height: 50px; object-fit: cover; }
+    footer { text-align: center; margin-top: 30px; font-size: 14px; color: #555; }
+  </style>
+</head>
+<body>
+
+  <img src="/logopanel.jpg" alt="Logo" class="logo">
+  <h2>Generate Akun VMess</h2>
+
+  <input type="text" id="ipPort" placeholder="IP:Port contoh 1.1.1.1:443" />
+  <select id="domain">
+    <option value="">-- Pilih Domain --</option>
+    <option value="clubgratis.xyz">clubgratis.xyz</option>
+    <option value="akungratis.dpdns.org">akungratis.dpdns.org</option>
+    <option value="wilcardcf.biz.id">wilcardcf.biz.id</option>
+    <option value="mrkings.xyz">mrkings.xyz</option>
+  </select>
+  <select id="bug">
+    <option value="">-- Pilih Bug Wildcard --</option>
+    <option value="ava.game.naver.com">ava.game.naver.com</option>
+    <option value="graph.instagram.com">graph.instagram.com</option>
+    <option value="quiz.int.vidio.com">quiz.int.vidio.com</option>
+    <option value="investor.fb.com">investor.fb.com</option>
+    <option value="support.zoom.us">support.zoom.us</option>
+    <option value="zaintest.vuclip.com">zaintest.vuclip.com</option>
+  </select>
+
+  <button onclick="generateVMess()">Buat Akun VMess</button>
+
+  <div id="result" class="hidden">
+    <div class="result-box">
+      <h3>Information Account:</h3>
+    <p><strong>🌐 Remark:</strong> <span id="remarks"class="font-semibold"></span></p>
+    <p><strong>🟢 Ping:</strong> <span id="ping" class="font-semibold" style="color:green;"></span></p>
+    <p><strong>📡 Domain:</strong> <span id="res-domain"></span></p>
+    <p><strong>🐞 SNI/Bug:</strong> <span id="res-bug"></span></p>
+    <p><strong>🆔 UUID:</strong> <span id="uuid"></span></p>
+    <p><strong>🚪 Path:</strong> <span id="path"></span></p>
+      
+      <p><strong>VMess TLS:</strong></p>
+      <textarea id="vmess-link" readonly></textarea>
+      <div class="qr"><img id="qrcode" src="" alt="QR Code VMess TLS"></div>
+      
+      <button onclick="copyConfig('vmess-link')">Salin Config TLS</button>
+    </div>
+
+    <div class="result-box">
+      <p><strong>VMess NonTLS:</strong></p>
+      <textarea id="vmess-link-nontls" readonly></textarea>
+      <div class="qr"><img id="qrcode-nontls" src="" alt="QR Code VMess Non-TLS"></div>
+      
+      <button onclick="copyConfig('vmess-link-nontls')">Salin Config Non-TLS</button>
+    </div>
+  </div>
+  
+  <footer>
+    <p><a href="http://t.me/club_gratis">Contact</a></p>
+    <p>&copy; 2025 Club Gratis</p>
+  </footer>
+
+  <script>
+    function toBase64Unicode(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+    async function generateVMess() {
+      const ipPort = document.getElementById('ipPort').value.trim();
+      const domain = document.getElementById('domain').value.trim();
+      const bug = document.getElementById('bug').value.trim();
+      const resultBox = document.getElementById('result');
+
+      if (!ipPort || !domain || !bug || !ipPort.includes(':')) {
+        alert('Isi semua field dengan benar.');
+        return;
+      }
+
+      const [ip, port] = ipPort.split(':');
+      const uuid = 'aaaaaaa1-bbbb-4ccc-addd-eeeeeeeeeee1';
+      const path = `/Club-Gratis/${ip}-${port}`;
+
+      try {
+        const res = await fetch(`https://api-checker.aquamarinelavinia.workers.dev/?ip=${ip}:${port}`);
+        const data = await res.json();
+
+        if (!data.message || !data.message.includes('ACTIVE')) {
+          alert('Proxy tidak aktif!');
+          return;
+        }
+
+        const remarks = `${data.country || 'Unknown'} ${data.flag || ''} [${data.isp || 'Unknown ISP'}]`;
+        const ping = `${data.delay}`;
+        const host = `${bug}.${domain}`;
+
+        // TLS
+        const linkTLS = {
+          v: "2",
+          ps: remarks,
+          add: bug,
+          port: "443",
+          id: uuid,
+          aid: "0",
+          net: "ws",
+          type: "none",
+          host: host,
+          path: path,
+          tls: "tls",
+          scy: "zero"
+        };
+
+        // non-TLS
+        const linkNonTLS = {
+          v: "2",
+          ps: remarks,
+          add: bug,
+          port: "80",
+          id: uuid,
+          aid: "0",
+          net: "ws",
+          type: "none",
+          host: host,
+          path: path,
+          tls: "",
+          scy: "zero"
+        };
+
+        const vmessTLS = "vmess://" + toBase64Unicode(JSON.stringify(linkTLS));
+        const vmessNonTLS = "vmess://" + toBase64Unicode(JSON.stringify(linkNonTLS));
+
+        document.getElementById('remarks').textContent = remarks;
+        document.getElementById('ping').textContent = ping;
+        document.getElementById('res-domain').textContent = domain;
+        document.getElementById('res-bug').textContent = bug;
+        document.getElementById('uuid').textContent = uuid;
+        document.getElementById('path').textContent = path;
+        document.getElementById('vmess-link').value = vmessTLS;
+        document.getElementById('vmess-link-nontls').value = vmessNonTLS;
+        document.getElementById('qrcode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(vmessTLS)}`;
+        document.getElementById('qrcode-nontls').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(vmessNonTLS)}`;
+        resultBox.classList.remove('hidden');
+      } catch (err) {
+        console.error('Gagal mengambil data proxy:', err);
+        alert('Gagal mengambil data proxy.');
+      }
+    }
+
+    function copyConfig(id) {
+      const link = document.getElementById(id);
+      link.select();
+      link.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("Konfigurasi disalin!");
+    }
+  </script>
+
+</body>
+</html>

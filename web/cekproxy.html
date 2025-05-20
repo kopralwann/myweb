@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cek Proxy Lengkap</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f8;
+    }
+    header {
+      background: #007BFF;
+      color: white;
+      padding: 1rem;
+      position: relative;
+    }
+    header img {
+      position: absolute;
+      right: 1rem;
+      top: 0.5rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    main {
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 2rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      background: #007BFF;
+      color: white;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      width: 100%;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #e9ecef;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cek Proxy Aktif Lengkap</h1>
+    <img src="/logopanel.jpg" alt="Logo" />
+  </header>
+
+  <main>
+    <input type="text" id="proxyInput" placeholder="Masukkan IP:Port, contoh: 123.123.123.123:8080" />
+    <button onclick="cekProxy()">Cek Sekarang</button>
+    <div id="hasil" class="result" style="display:none;"></div>
+  </main>
+
+  <footer>
+    &copy; 2025 Club Gratis | Hubungi kami di Grup Telegram <a href="https://t.me/club_gratis">@Club_Gratis</a>
+  </footer>
+
+  <script>
+    async function cekProxy() {
+      const input = document.getElementById("proxyInput").value.trim();
+      const hasil = document.getElementById("hasil");
+
+      if (!input.includes(":")) {
+        alert("Format harus IP:Port!");
+        return;
+      }
+
+      const [ip, port] = input.split(":");
+      hasil.style.display = "block";
+      hasil.innerHTML = "Memeriksa proxy...";
+
+      try {
+        const response = await fetch(`https://api-checker.aquamarinelavinia.workers.dev/?ip=${ip}:${port}`);
+        const data = await response.json();
+
+        if (data.message || data.message.includes('ACTIVE')) {
+          hasil.innerHTML = `
+            <strong>🛰️ Status:</strong> ${data.message}<br>
+            <strong>🔑 ProxyIP:</strong> ${data.proxyip ? '✅ Yes' : '❌ No'}<br>
+            <strong>🌍 Negara:</strong> ${data.country} ${data.flag}<br>
+            <strong>🗼 ISP:</strong> ${data.isp}<br>
+            <strong>🌐 IP:</strong> ${data.ip}<br>
+            <strong>🚪 Port:</strong> ${data.port}<br>
+            <strong>🟢 Latency:</strong> <a class="font-semibold" style="color:green;">${data.delay}</a><br>
+            <strong>📡 ASN:</strong> AS${data.asn}<br>
+            <strong>🏙️ Kota:</strong> ${data.city}<br>
+            <strong>📈 Zona Waktu:</strong> ${data.timezone}<br>
+            <strong>⚙️ Colo:</strong> ${data.colo}<br>
+            <strong>📍 Latitude:</strong> ${data.latitude}<br>
+            <strong>⚡ Longitude:</strong> ${data.longitude}<br>
+            <strong>🗺️ Maps:</strong> <a href="https://www.google.com/maps?q=${data.latitude},${data.longitude}" target="_blank" class="text-blue-600 underline">Lihat Lokasi</a>
+          `;
+        } else {
+          hasil.innerHTML = `<strong>Status:</strong> Mati ❌`;
+        }
+      } catch (error) {
+        hasil.innerHTML = "Gagal memeriksa proxy.";
+      }
+    }
+  </script>
+</body>
+</html>
